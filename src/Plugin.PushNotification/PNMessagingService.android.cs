@@ -62,15 +62,14 @@ namespace Plugin.PushNotification
             }
 
             //Fix localization arguments parsing
-            string[] localizationKeys=new string[]{ "title_loc_args", "body_loc_args"};
-            foreach(var locKey in localizationKeys)
+            string[] localizationKeys = new string[] { "title_loc_args", "body_loc_args" };
+            foreach (var locKey in localizationKeys)
             {
                 if (parameters.ContainsKey(locKey) && parameters[locKey] is string parameterValue)
                 {
                     if (parameterValue.StartsWith("[") && parameterValue.EndsWith("]") && parameterValue.Length > 2)
                     {
-
-                        var arrayValues = parameterValue.Substring(1, parameterValue.Length - 2);
+                        var arrayValues = parameterValue[1..^1];
                         parameters[locKey] = arrayValues.Split(',').Select(t => t.Trim()).ToArray();
                     }
                     else
@@ -79,8 +78,7 @@ namespace Plugin.PushNotification
                     }
                 }
             }
-           
-          
+
             PushNotificationManager.RegisterData(parameters);
             CrossPushNotification.Current.NotificationHandler?.OnReceived(parameters);
         }

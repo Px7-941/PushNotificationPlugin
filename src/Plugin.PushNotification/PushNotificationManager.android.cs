@@ -1,25 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
-using Android.Gms.Tasks;
+using Android.Gms.Extensions;
 using Android.Graphics;
 using Android.Media;
 using Android.OS;
-using Firebase.Iid;
+using AndroidX.Core.Content.PM;
 using Firebase.Messaging;
-using Java.Interop;
 
 namespace Plugin.PushNotification
 {
     /// <summary>
     /// Implementation for Feature
     /// </summary>
-    public class PushNotificationManager : Java.Lang.Object, IPushNotification, IOnCompleteListener
+    public class PushNotificationManager : Java.Lang.Object, IPushNotification
     {
         //internal static PushNotificationActionReceiver ActionReceiver = null;
         static NotificationResponse delayedNotificationResponse = null;
@@ -57,7 +55,6 @@ namespace Plugin.PushNotification
         /// </summary>
         public static List<NotificationChannelProps> NotificationChannels { get; set; }
 
-        static TaskCompletionSource<string> _tokenTcs;
         internal static Type DefaultNotificationActivityType { get; set; } = null;
 
         static Context _context;
@@ -87,9 +84,7 @@ namespace Plugin.PushNotification
                         manager.Cancel(notificationTag, notificationId);
                 }
 
-
                 var response = new NotificationResponse(parameters, extras.GetString(DefaultPushNotificationHandler.ActionIdentifierKey, string.Empty));
-
 
                 if (string.IsNullOrEmpty(response.Identifier))
                 {
@@ -99,7 +94,7 @@ namespace Plugin.PushNotification
                     }
                     else
                     {
-                        _onNotificationOpened?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(response.Data, response.Identifier, response.Type,response.Result));
+                        _onNotificationOpened?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(response.Data, response.Identifier, response.Type, response.Result));
                     }
                     CrossPushNotification.Current.NotificationHandler?.OnOpened(response);
                 }
@@ -111,13 +106,11 @@ namespace Plugin.PushNotification
                     }
                     else
                     {
-                        _onNotificationAction?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(response.Data, response.Identifier, response.Type,response.Result));
+                        _onNotificationAction?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(response.Data, response.Identifier, response.Type, response.Result));
                     }
 
                     CrossPushNotification.Current.NotificationHandler?.OnAction(response);
                 }
-
-               
             }
         }
 
@@ -129,11 +122,9 @@ namespace Plugin.PushNotification
             FirebaseMessaging.Instance.AutoInitEnabled = autoRegistration;
             if (autoRegistration)
             {
-                ThreadPool.QueueUserWorkItem(state =>
+                Task.Run(async () =>
                 {
-                    var packageName = Application.Context.PackageManager.GetPackageInfo(Application.Context.PackageName, PackageInfoFlags.MetaData).PackageName;
-                    var versionCode = Application.Context.PackageManager.GetPackageInfo(Application.Context.PackageName, PackageInfoFlags.MetaData).VersionCode;
-                    var versionName = Application.Context.PackageManager.GetPackageInfo(Application.Context.PackageName, PackageInfoFlags.MetaData).VersionName;
+                    var (packageName, versionCode, versionName) = GetPackageInformation();
                     var prefs = Application.Context.GetSharedPreferences(KeyGroupName, FileCreationMode.Private);
 
                     try
@@ -144,7 +135,7 @@ namespace Plugin.PushNotification
 
                         if (resetToken || (!string.IsNullOrEmpty(storedPackageName) && (!storedPackageName.Equals(packageName, StringComparison.CurrentCultureIgnoreCase) || !storedVersionName.Equals(versionName, StringComparison.CurrentCultureIgnoreCase) || !storedVersionCode.Equals($"{versionCode}", StringComparison.CurrentCultureIgnoreCase))))
                         {
-                            ((PushNotificationManager)CrossPushNotification.Current).CleanUp();
+                            await ((PushNotificationManager)CrossPushNotification.Current).CleanUp();
                         }
                     }
                     catch (Exception ex)
@@ -193,19 +184,23 @@ namespace Plugin.PushNotification
                                                  .SetUsage(AudioUsageKind.Notification).Build();
 
                             notChannel.SetSound(SoundUri, soundAttributes);
-
                         }
                         catch (Exception ex)
                         {
                             System.Diagnostics.Debug.WriteLine(ex);
                         }
-
                     }
-
                     notificationManager.CreateNotificationChannel(notChannel);
                 }
             }
             System.Diagnostics.Debug.WriteLine(CrossPushNotification.Current.Token);
+        }
+
+        private static (string packageName, int versionCode, string versionName) GetPackageInformation()
+        {
+            PackageInfo pInfo = Application.Context.PackageManager.GetPackageInfo(Application.Context.PackageName, PackageInfoFlags.MetaData);
+            var longVersionCode = PackageInfoCompat.GetLongVersionCode(pInfo);
+            return (pInfo.PackageName, (int)longVersionCode, pInfo.VersionName);
         }
 
         public static void Initialize(Context context, NotificationUserCategory[] notificationCategories, bool resetToken, bool createNotificationChannel = true, bool autoRegistration = true)
@@ -217,7 +212,7 @@ namespace Plugin.PushNotification
         public void RegisterForPushNotifications()
         {
             FirebaseMessaging.Instance.AutoInitEnabled = true;
-            System.Threading.Tasks.Task.Run(async () =>
+            Task.Run(async () =>
             {
                 var token = await GetTokenAsync();
                 if (!string.IsNullOrEmpty(token))
@@ -229,13 +224,12 @@ namespace Plugin.PushNotification
 
         async Task<string> GetTokenAsync()
         {
-            _tokenTcs = new TaskCompletionSource<string>();
-            FirebaseInstanceId.Instance.GetInstanceId().AddOnCompleteListener(this);
             string retVal = null;
 
             try
             {
-                retVal = await _tokenTcs.Task;
+                var task = await FirebaseMessaging.Instance.GetToken();
+                retVal = task.ToString();
             }
             catch (Exception ex)
             {
@@ -248,17 +242,17 @@ namespace Plugin.PushNotification
         public void UnregisterForPushNotifications()
         {
             FirebaseMessaging.Instance.AutoInitEnabled = false;
-            Reset();
+            Task.Run(async () =>
+            {
+                await Reset();
+            });
         }
 
-        public void Reset()
+        public async Task Reset()
         {
             try
             {
-                ThreadPool.QueueUserWorkItem(state =>
-                {
-                    CleanUp();
-                });
+                await CleanUp();
             }
             catch (Exception ex)
             {
@@ -266,9 +260,9 @@ namespace Plugin.PushNotification
             }
         }
 
-        void CleanUp()
+        async Task CleanUp()
         {
-            FirebaseInstanceId.Instance.DeleteInstanceId();
+            await FirebaseMessaging.Instance.DeleteToken();
             Token = string.Empty;
         }
 
@@ -362,7 +356,6 @@ namespace Plugin.PushNotification
                         _onNotificationAction?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(tmpParams.Data, tmpParams.Identifier, tmpParams.Type));
                         delayedNotificationResponse = null;
                     }
-
                 }
             }
             remove
@@ -425,9 +418,9 @@ namespace Plugin.PushNotification
         {
             _onTokenRefresh?.Invoke(CrossPushNotification.Current, new PushNotificationTokenEventArgs(token));
         }
-        internal static void RegisterAction(IDictionary<string, object> data,string result = null)
+        internal static void RegisterAction(IDictionary<string, object> data, string result = null)
         {
-            var response = new NotificationResponse(data, data.ContainsKey(DefaultPushNotificationHandler.ActionIdentifierKey) ? $"{data[DefaultPushNotificationHandler.ActionIdentifierKey]}" : string.Empty, NotificationCategoryType.Default,result);
+            var response = new NotificationResponse(data, data.ContainsKey(DefaultPushNotificationHandler.ActionIdentifierKey) ? $"{data[DefaultPushNotificationHandler.ActionIdentifierKey]}" : string.Empty, NotificationCategoryType.Default, result);
 
             _onNotificationAction?.Invoke(CrossPushNotification.Current, new PushNotificationResponseEventArgs(response.Data, response.Identifier, response.Type));
         }
@@ -450,29 +443,6 @@ namespace Plugin.PushNotification
             var editor = Application.Context.GetSharedPreferences(KeyGroupName, FileCreationMode.Private).Edit();
             editor.PutString(TokenKey, token);
             editor.Commit();
-        }
-
-        public void OnComplete(Android.Gms.Tasks.Task task)
-        {
-            try
-            {
-                if (task.IsSuccessful)
-                {
-                    string token = task.Result.JavaCast<IInstanceIdResult>().Token;
-                    _tokenTcs?.TrySetResult(token);
-                }
-                else
-                {
-                    _tokenTcs?.TrySetException(task.Exception);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                _tokenTcs?.TrySetException(ex);
-            }
-
-
         }
 
         public void ClearAllNotifications()

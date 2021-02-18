@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Plugin.PushNotification
 {
@@ -53,7 +52,7 @@ namespace Plugin.PushNotification
     public class NotificationUserReplyAction : NotificationUserAction
     {
         public string Placeholder { get; }
-        public NotificationUserReplyAction(string id, string title, NotificationActionType type = NotificationActionType.Default, string icon = "",string placeholder = "") : base(id,title,type,icon)
+        public NotificationUserReplyAction(string id, string title, NotificationActionType type = NotificationActionType.Default, string icon = "", string placeholder = "") : base(id, title, type, icon)
         {
             Placeholder = placeholder;
         }

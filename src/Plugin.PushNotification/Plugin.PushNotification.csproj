@@ -29,6 +29,7 @@
         <Owners>crossgeeks,rdelrosario</Owners>
         <Authors>Rendy Del Rosario, Sameer Khandekar, Px7-941</Authors>
         <Copyright>Copyright 2021 CrossGeeks</Copyright>
+        <Company>Rendy Del Rosario, Sameer Khandekar, Px7-941</Company>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
     <!-- Define what happens on build and release -->
@@ -45,7 +46,6 @@
     <PropertyGroup>
         <NoWarn>1701;1702;1591</NoWarn>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Plugin.PushNotification.xml</DocumentationFile>
-        <Company>Rendy Del Rosario, Sameer Khandekar, Px7-941</Company>
     </PropertyGroup>
     <ItemGroup>
         <None Include="..\..\assets\Icon.png" Pack="true" PackagePath="\" />

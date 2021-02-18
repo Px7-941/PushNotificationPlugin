@@ -147,7 +147,7 @@ namespace Plugin.PushNotification
         {
             CrossPushNotification.Current.NotificationHandler = CrossPushNotification.Current.NotificationHandler ?? new DefaultPushNotificationHandler();
 
-            if (notification != null && notification.UserInfo !=null)
+            if (notification != null && notification.UserInfo != null)
             {
                 var parameters = GetParameters(notification.UserInfo);
 
@@ -205,10 +205,9 @@ namespace Plugin.PushNotification
                                 actions.Add(UNNotificationAction.FromIdentifier(action.Id, action.Title, UNNotificationActionOptions.Foreground));
                                 break;
                             case NotificationActionType.Reply:
-                                actions.Add(UNTextInputNotificationAction.FromIdentifier(action.Id,action.Title,UNNotificationActionOptions.None,action.Title,string.Empty));
+                                actions.Add(UNTextInputNotificationAction.FromIdentifier(action.Id, action.Title, UNNotificationActionOptions.None, action.Title, string.Empty));
                                 break;
                         }
-
                     }
 
                     // Create category
@@ -232,25 +231,24 @@ namespace Plugin.PushNotification
         {
             // Register your app for remote notifications.
 
-                var authOptions = UNAuthorizationOptions.Alert | UNAuthorizationOptions.Badge | UNAuthorizationOptions.Sound;
+            var authOptions = UNAuthorizationOptions.Alert | UNAuthorizationOptions.Badge | UNAuthorizationOptions.Sound;
 
-                UNUserNotificationCenter.Current.Delegate = CrossPushNotification.Current as IUNUserNotificationCenterDelegate;
-                UNUserNotificationCenter.Current.RequestAuthorization(authOptions, (granted, error) =>
+            UNUserNotificationCenter.Current.Delegate = CrossPushNotification.Current as IUNUserNotificationCenterDelegate;
+            UNUserNotificationCenter.Current.RequestAuthorization(authOptions, (granted, error) =>
+            {
+                if (error != null)
                 {
-                    if (error != null)
-                    {
-                        _onNotificationError?.Invoke(CrossPushNotification.Current, new PushNotificationErrorEventArgs(PushNotificationErrorType.PermissionDenied, error.Description));
-                    }
-                    else if (!granted)
-                    {
-                        _onNotificationError?.Invoke(CrossPushNotification.Current, new PushNotificationErrorEventArgs(PushNotificationErrorType.PermissionDenied, "Push notification permission not granted"));
-                    }
-                    else
-                    {
-                        this.InvokeOnMainThread(() => NSApplication.SharedApplication.RegisterForRemoteNotifications());
-                    }
-                });
-          
+                    _onNotificationError?.Invoke(CrossPushNotification.Current, new PushNotificationErrorEventArgs(PushNotificationErrorType.PermissionDenied, error.Description));
+                }
+                else if (!granted)
+                {
+                    _onNotificationError?.Invoke(CrossPushNotification.Current, new PushNotificationErrorEventArgs(PushNotificationErrorType.PermissionDenied, "Push notification permission not granted"));
+                }
+                else
+                {
+                    this.InvokeOnMainThread(() => NSApplication.SharedApplication.RegisterForRemoteNotifications());
+                }
+            });
         }
 
         public void UnregisterForPushNotifications()
@@ -259,7 +257,7 @@ namespace Plugin.PushNotification
             Token = string.Empty;
         }
 
-        
+
         [Export("userNotificationCenter:willPresentNotification:withCompletionHandler:")]
         public void WillPresentNotification(UNUserNotificationCenter center, UNNotification notification, Action<UNNotificationPresentationOptions> completionHandler)
         {
@@ -285,13 +283,11 @@ namespace Plugin.PushNotification
                             if (!CurrentNotificationPresentationOption.HasFlag(UNNotificationPresentationOptions.Alert))
                             {
                                 CurrentNotificationPresentationOption |= UNNotificationPresentationOptions.Alert;
-
                             }
 
                             if (!CurrentNotificationPresentationOption.HasFlag(UNNotificationPresentationOptions.Sound))
                             {
                                 CurrentNotificationPresentationOption |= UNNotificationPresentationOptions.Sound;
-
                             }
                             break;
                         case "low":
@@ -301,11 +297,9 @@ namespace Plugin.PushNotification
                             if (CurrentNotificationPresentationOption.HasFlag(UNNotificationPresentationOptions.Alert))
                             {
                                 CurrentNotificationPresentationOption &= ~UNNotificationPresentationOptions.Alert;
-
                             }
                             break;
                     }
-
                     break;
                 }
             }
@@ -317,22 +311,22 @@ namespace Plugin.PushNotification
         public void DidReceiveNotificationResponse(UNUserNotificationCenter center, UNNotificationResponse response, Action completionHandler)
         {
             var parameters = GetParameters(response.Notification.Request.Content.UserInfo);
-            string? result = null; 
+            string? result = null;
             NotificationCategoryType catType = NotificationCategoryType.Default;
             if (response.IsCustomAction)
                 catType = NotificationCategoryType.Custom;
             else if (response.IsDismissAction)
                 catType = NotificationCategoryType.Dismiss;
-            
-            
+
+
             if (response is UNTextInputNotificationResponse textResponse)
             {
                 result = textResponse.UserText;
             }
 
-            var notificationResponse = new NotificationResponse(parameters, $"{response.ActionIdentifier}".Equals("com.apple.UNNotificationDefaultActionIdentifier", StringComparison.CurrentCultureIgnoreCase) ? string.Empty : $"{response.ActionIdentifier}", catType,result);
+            var notificationResponse = new NotificationResponse(parameters, $"{response.ActionIdentifier}".Equals("com.apple.UNNotificationDefaultActionIdentifier", StringComparison.CurrentCultureIgnoreCase) ? string.Empty : $"{response.ActionIdentifier}", catType, result);
 
-            _onNotificationAction?.Invoke(this, new PushNotificationResponseEventArgs(notificationResponse.Data, notificationResponse.Identifier, notificationResponse.Type,result));
+            _onNotificationAction?.Invoke(this, new PushNotificationResponseEventArgs(notificationResponse.Data, notificationResponse.Identifier, notificationResponse.Type, result));
 
             CrossPushNotification.Current.NotificationHandler?.OnAction(notificationResponse);
 
@@ -445,7 +439,6 @@ namespace Plugin.PushNotification
             if (deliveredNotificationsMatches.Length > 0)
             {
                 UNUserNotificationCenter.Current.RemoveDeliveredNotifications(deliveredNotificationsMatches);
-
             }
         }
 
@@ -462,7 +455,6 @@ namespace Plugin.PushNotification
                 if (deliveredNotificationsMatches.Length > 0)
                 {
                     UNUserNotificationCenter.Current.RemoveDeliveredNotifications(deliveredNotificationsMatches);
-
                 }
             }
         }

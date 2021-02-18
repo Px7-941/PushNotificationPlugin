@@ -212,10 +212,9 @@ namespace Plugin.PushNotification
                                 actions.Add(UNNotificationAction.FromIdentifier(action.Id, action.Title, UNNotificationActionOptions.Foreground));
                                 break;
                             case NotificationActionType.Reply:
-                                actions.Add(UNTextInputNotificationAction.FromIdentifier(action.Id,action.Title,UNNotificationActionOptions.None,action.Title,string.Empty));
+                                actions.Add(UNTextInputNotificationAction.FromIdentifier(action.Id, action.Title, UNNotificationActionOptions.None, action.Title, string.Empty));
                                 break;
                         }
-
                     }
 
                     // Create category
@@ -336,22 +335,22 @@ namespace Plugin.PushNotification
         public void DidReceiveNotificationResponse(UNUserNotificationCenter center, UNNotificationResponse response, Action completionHandler)
         {
             var parameters = GetParameters(response.Notification.Request.Content.UserInfo);
-            string? result = null; 
+            string? result = null;
             NotificationCategoryType catType = NotificationCategoryType.Default;
             if (response.IsCustomAction)
                 catType = NotificationCategoryType.Custom;
             else if (response.IsDismissAction)
                 catType = NotificationCategoryType.Dismiss;
-            
-            
+
+
             if (response is UNTextInputNotificationResponse textResponse)
             {
                 result = textResponse.UserText;
             }
 
-            var notificationResponse = new NotificationResponse(parameters, $"{response.ActionIdentifier}".Equals("com.apple.UNNotificationDefaultActionIdentifier", StringComparison.CurrentCultureIgnoreCase) ? string.Empty : $"{response.ActionIdentifier}", catType,result);
+            var notificationResponse = new NotificationResponse(parameters, $"{response.ActionIdentifier}".Equals("com.apple.UNNotificationDefaultActionIdentifier", StringComparison.CurrentCultureIgnoreCase) ? string.Empty : $"{response.ActionIdentifier}", catType, result);
 
-            _onNotificationAction?.Invoke(this, new PushNotificationResponseEventArgs(notificationResponse.Data, notificationResponse.Identifier, notificationResponse.Type,result));
+            _onNotificationAction?.Invoke(this, new PushNotificationResponseEventArgs(notificationResponse.Data, notificationResponse.Identifier, notificationResponse.Type, result));
 
             CrossPushNotification.Current.NotificationHandler?.OnAction(notificationResponse);
 
@@ -468,13 +467,11 @@ namespace Plugin.PushNotification
         {
             if (UIDevice.CurrentDevice.CheckSystemVersion(10, 0))
             {
-
                 var deliveredNotifications = await UNUserNotificationCenter.Current.GetDeliveredNotificationsAsync();
                 var deliveredNotificationsMatches = deliveredNotifications.Where(u => (u.Request.Content.UserInfo.ContainsKey(NotificationIdKey) && $"{u.Request.Content.UserInfo[NotificationIdKey]}".Equals($"{id}")) || (u.Request.Content.UserInfo.ContainsKey(ApsNotificationIdKey) && u.Request.Content.UserInfo[ApsNotificationIdKey].Equals($"{id}"))).Select(s => s.Request.Identifier).ToArray();
                 if (deliveredNotificationsMatches.Length > 0)
                 {
                     UNUserNotificationCenter.Current.RemoveDeliveredNotifications(deliveredNotificationsMatches);
-
                 }
             }
             else
@@ -484,7 +481,6 @@ namespace Plugin.PushNotification
                 {
                     UIApplication.SharedApplication.CancelLocalNotification(notification);
                 }
-
             }
         }
 
@@ -504,7 +500,6 @@ namespace Plugin.PushNotification
                     if (deliveredNotificationsMatches.Length > 0)
                     {
                         UNUserNotificationCenter.Current.RemoveDeliveredNotifications(deliveredNotificationsMatches);
-
                     }
                 }
                 else
@@ -514,7 +509,6 @@ namespace Plugin.PushNotification
                     {
                         UIApplication.SharedApplication.CancelLocalNotification(notification);
                     }
-
                 }
             }
         }

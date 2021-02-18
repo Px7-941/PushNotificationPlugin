@@ -21,13 +21,21 @@ namespace PushNotificationSample
 
         protected override void OnStart()
         {
-            SetMessageText($"{mPage.Message} TOKEN REC: {CrossPushNotification.Current.Token}");
+            SetMessageText($"{mPage.Message}{Environment.NewLine} Current Token: {CrossPushNotification.Current.Token}");
 
             // Handle when your app starts
             CrossPushNotification.Current.OnTokenRefresh += (s, p) =>
             {
-                System.Diagnostics.Debug.WriteLine($"TOKEN REC: {p.Token}");
-                SetMessageText($"TOKEN REC: {p.Token}");
+                var message = $"OnTokenRefresh: {p.Token}";
+                System.Diagnostics.Debug.WriteLine(message);
+                SetMessageText(message);
+            };
+
+            CrossPushNotification.Current.OnNotificationError += (s, p) =>
+            {
+                var message = $"Error: {p.Message}";
+                System.Diagnostics.Debug.WriteLine(message);
+                SetMessageText(message);
             };
 
             CrossPushNotification.Current.OnNotificationReceived += (s, p) =>

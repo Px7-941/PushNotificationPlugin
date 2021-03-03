@@ -5,7 +5,9 @@
         <AssemblyName>PushNotificationSample</AssemblyName>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Plugin.PushNotification" Version="3.*" />
         <PackageReference Include="Xamarin.Forms" Version="5.0.0.2012" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Plugin.PushNotification\Plugin.PushNotification.csproj" />
     </ItemGroup>
 </Project>

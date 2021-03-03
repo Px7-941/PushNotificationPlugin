@@ -30,7 +30,7 @@ namespace PushNotificationSample.Droid
 
             //If debug you should reset the token each time.
 #if DEBUG
-            PushNotificationManager.Initialize(this, true);
+            PushNotificationManager.Initialize(this, false);
 #else
             PushNotificationManager.Initialize(this, false);
 #endif

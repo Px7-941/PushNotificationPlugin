@@ -5,11 +5,11 @@
         <TargetFrameworks Condition=" $(OS) == 'WINDOWS_NT' ">uap10.0.16299;$(TargetFrameworks)</TargetFrameworks>
         <AssemblyName>Plugin.PushNotification</AssemblyName>
         <RootNamespace>Plugin.PushNotification</RootNamespace>
-        <PackageId>Plugin.PushNotification</PackageId>
+        <PackageId>Post.Mobile.Plugin.PushNotification</PackageId>
         <Product>$(AssemblyName) ($(TargetFramework))</Product>
-        <AssemblyVersion>3.4.3</AssemblyVersion>
-        <AssemblyFileVersion>3.4.3</AssemblyFileVersion>
-        <Version>3.4.3</Version>
+        <AssemblyVersion>3.7.0</AssemblyVersion>
+        <AssemblyFileVersion>3.7.0</AssemblyFileVersion>
+        <Version>3.7.0</Version>
         <PackOnBuild>true</PackOnBuild>
         <NeutralLanguage>en</NeutralLanguage>
         <DefineConstants>$(DefineConstants);</DefineConstants>

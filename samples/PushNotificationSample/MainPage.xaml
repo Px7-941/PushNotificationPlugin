@@ -1,11 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:PushNotificationSample"
-             x:Class="PushNotificationSample.MainPage">
-
-    <Label x:Name="textLabel" 
-           VerticalOptions="Center" 
-           HorizontalOptions="Center" />
-
+<ContentPage
+    x:Class="PushNotificationSample.MainPage"
+    xmlns="http://xamarin.com/schemas/2014/forms"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:PushNotificationSample">
+    <StackLayout Spacing="5">
+        <Label
+            x:Name="textLabel"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+        <Button
+            x:Name="Reset"
+            Clicked="Reset_Clicked"
+            Text="Reset Token" />
+    </StackLayout>
 </ContentPage>

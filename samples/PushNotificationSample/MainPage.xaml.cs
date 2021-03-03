@@ -1,4 +1,5 @@
-﻿using Xamarin.Forms;
+﻿using Plugin.PushNotification;
+using Xamarin.Forms;
 
 namespace PushNotificationSample
 {
@@ -20,6 +21,13 @@ namespace PushNotificationSample
         public MainPage()
         {
             InitializeComponent();
+        }
+
+        void Reset_Clicked(object sender, System.EventArgs e)
+        {
+            Message = string.Empty;
+            CrossPushNotification.Current.UnregisterForPushNotifications();
+            CrossPushNotification.Current.RegisterForPushNotifications();
         }
     }
 }

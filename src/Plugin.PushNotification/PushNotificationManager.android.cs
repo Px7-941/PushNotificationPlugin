@@ -17,25 +17,24 @@ namespace Plugin.PushNotification
     /// <summary>
     /// Implementation for Feature
     /// </summary>
-    public class PushNotificationManager : Java.Lang.Object, IPushNotification
+    public class PushNotificationManager : IPushNotification
     {
-        //internal static PushNotificationActionReceiver ActionReceiver = null;
-        static NotificationResponse delayedNotificationResponse = null;
         internal const string KeyGroupName = "Plugin.PushNotification";
         internal const string TokenKey = "TokenKey";
         internal const string AppVersionCodeKey = "AppVersionCodeKey";
         internal const string AppVersionNameKey = "AppVersionNameKey";
         internal const string AppVersionPackageNameKey = "AppVersionPackageNameKey";
-        static IList<NotificationUserCategory> userNotificationCategories = new List<NotificationUserCategory>();
-        public static string NotificationContentTitleKey { get; set; }
-        public static string NotificationContentTextKey { get; set; }
-        public static string NotificationContentDataKey { get; set; }
+        private static NotificationResponse? delayedNotificationResponse = null;
+        private static readonly IList<NotificationUserCategory> userNotificationCategories = new List<NotificationUserCategory>();
+        public static string? NotificationContentTitleKey { get; set; }
+        public static string? NotificationContentTextKey { get; set; }
+        public static string? NotificationContentDataKey { get; set; }
         public static int IconResource { get; set; }
         public static int LargeIconResource { get; set; }
         public static bool ShouldShowWhen { get; set; } = true;
-        public static Android.Net.Uri SoundUri { get; set; }
+        public static Android.Net.Uri? SoundUri { get; set; }
         public static Color? Color { get; set; }
-        public static Type NotificationActivityType { get; set; }
+        public static Type? NotificationActivityType { get; set; }
         public static ActivityFlags? NotificationActivityFlags { get; set; } = ActivityFlags.ClearTop | ActivityFlags.SingleTop;
 
         /// <summary>
@@ -53,17 +52,17 @@ namespace Plugin.PushNotification
         /// <summary>
         /// to work with a singe notification channels
         /// </summary>
-        public static List<NotificationChannelProps> NotificationChannels { get; set; }
+        public static List<NotificationChannelProps>? NotificationChannels { get; set; }
 
-        internal static Type DefaultNotificationActivityType { get; set; } = null;
+        internal static Type? DefaultNotificationActivityType { get; set; } = null;
 
-        static Context _context;
+        private static Context? _context;
 
-        public static void ProcessIntent(Activity activity, Intent intent, bool enableDelayedResponse = true)
+        public static void ProcessIntent(Activity activity, Intent? intent, bool enableDelayedResponse = true)
         {
             DefaultNotificationActivityType = activity.GetType();
 
-            Bundle extras = intent?.Extras;
+            var extras = intent?.Extras;
             if (extras != null && !extras.IsEmpty)
             {
                 var parameters = new Dictionary<string, object>();
@@ -73,10 +72,10 @@ namespace Plugin.PushNotification
                         parameters.Add(key, $"{extras.Get(key)}");
                 }
 
-                NotificationManager manager = _context.GetSystemService(Context.NotificationService) as NotificationManager;
                 var notificationId = extras.GetInt(DefaultPushNotificationHandler.ActionNotificationIdKey, -1);
                 if (notificationId != -1)
                 {
+                    var manager = _context.GetSystemService(Context.NotificationService) as NotificationManager;
                     var notificationTag = extras.GetString(DefaultPushNotificationHandler.ActionNotificationTagKey, string.Empty);
                     if (notificationTag == null)
                         manager.Cancel(notificationId);
@@ -135,7 +134,7 @@ namespace Plugin.PushNotification
 
                         if (resetToken || (!string.IsNullOrEmpty(storedPackageName) && (!storedPackageName.Equals(packageName, StringComparison.CurrentCultureIgnoreCase) || !storedVersionName.Equals(versionName, StringComparison.CurrentCultureIgnoreCase) || !storedVersionCode.Equals($"{versionCode}", StringComparison.CurrentCultureIgnoreCase))))
                         {
-                            await ((PushNotificationManager)CrossPushNotification.Current).CleanUp();
+                            await ((PushNotificationManager)CrossPushNotification.Current).CleanUp().ConfigureAwait(false);
                         }
                     }
                     catch (Exception ex)
@@ -151,7 +150,7 @@ namespace Plugin.PushNotification
                         editor.Commit();
                     }
                     CrossPushNotification.Current.RegisterForPushNotifications();
-                });
+                }).ConfigureAwait(false);
             }
 
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O && createNotificationChannel)
@@ -172,7 +171,7 @@ namespace Plugin.PushNotification
                     var channelId = channel.NotificationChannelId;
                     var channelName = channel.NotificationChannelName;
                     var channelImportance = channel.NotificationChannelImportance;
-                    var notificationManager = (NotificationManager)context.GetSystemService(Context.NotificationService);
+                    var notificationManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
                     var notChannel = new NotificationChannel(channelId, channelName, channelImportance);
 
                     if (SoundUri != null)
@@ -185,22 +184,20 @@ namespace Plugin.PushNotification
 
                             notChannel.SetSound(SoundUri, soundAttributes);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            System.Diagnostics.Debug.WriteLine(ex);
                         }
                     }
-                    notificationManager.CreateNotificationChannel(notChannel);
+                    notificationManager?.CreateNotificationChannel(notChannel);
                 }
             }
-            System.Diagnostics.Debug.WriteLine(CrossPushNotification.Current.Token);
         }
 
-        private static (string packageName, int versionCode, string versionName) GetPackageInformation()
+        private static (string? packageName, int versionCode, string? versionName) GetPackageInformation()
         {
             PackageInfo pInfo = Application.Context.PackageManager.GetPackageInfo(Application.Context.PackageName, PackageInfoFlags.MetaData);
             var longVersionCode = PackageInfoCompat.GetLongVersionCode(pInfo);
-            return (pInfo.PackageName, (int)longVersionCode, pInfo.VersionName);
+            return (pInfo?.PackageName, (int)longVersionCode, pInfo?.VersionName);
         }
 
         public static void Initialize(Context context, NotificationUserCategory[] notificationCategories, bool resetToken, bool createNotificationChannel = true, bool autoRegistration = true)
@@ -214,17 +211,17 @@ namespace Plugin.PushNotification
             FirebaseMessaging.Instance.AutoInitEnabled = true;
             Task.Run(async () =>
             {
-                var token = await GetTokenAsync();
+                var token = await GetTokenAsync().ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(token))
                 {
                     Token = token;
                 }
-            });
+            }).ConfigureAwait(false);
         }
 
-        async Task<string> GetTokenAsync()
+        private async Task<string> GetTokenAsync()
         {
-            string retVal = null;
+            var retVal = string.Empty;
 
             try
             {
@@ -244,11 +241,11 @@ namespace Plugin.PushNotification
             FirebaseMessaging.Instance.AutoInitEnabled = false;
             Task.Run(async () =>
             {
-                await Reset();
-            });
+                await Reset().ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
 
-        public async Task Reset()
+        private async Task Reset()
         {
             try
             {
@@ -260,12 +257,11 @@ namespace Plugin.PushNotification
             }
         }
 
-        async Task CleanUp()
+        private async Task CleanUp()
         {
             await FirebaseMessaging.Instance.DeleteToken();
             Token = string.Empty;
         }
-
 
         public static void Initialize(Context context, IPushNotificationHandler pushNotificationHandler, bool resetToken, bool createNotificationChannel = true, bool autoRegistration = true)
         {
@@ -293,35 +289,23 @@ namespace Plugin.PushNotification
             }
         }
 
-        static PushNotificationDataEventHandler _onNotificationReceived;
+        private static PushNotificationDataEventHandler? _onNotificationReceived;
         public event PushNotificationDataEventHandler OnNotificationReceived
         {
-            add
-            {
-                _onNotificationReceived += value;
-            }
-            remove
-            {
-                _onNotificationReceived -= value;
-            }
+            add => _onNotificationReceived += value;
+            remove => _onNotificationReceived -= value;
         }
 
-        static PushNotificationDataEventHandler _onNotificationDeleted;
+        private static PushNotificationDataEventHandler? _onNotificationDeleted;
         public event PushNotificationDataEventHandler OnNotificationDeleted
         {
-            add
-            {
-                _onNotificationDeleted += value;
-            }
-            remove
-            {
-                _onNotificationDeleted -= value;
-            }
+            add => _onNotificationDeleted += value;
+            remove => _onNotificationDeleted -= value;
         }
 
-        public IPushNotificationHandler NotificationHandler { get; set; }
+        public IPushNotificationHandler? NotificationHandler { get; set; }
 
-        static PushNotificationResponseEventHandler _onNotificationOpened;
+        private static PushNotificationResponseEventHandler? _onNotificationOpened;
         public event PushNotificationResponseEventHandler OnNotificationOpened
         {
             add
@@ -335,13 +319,10 @@ namespace Plugin.PushNotification
                     delayedNotificationResponse = null;
                 }
             }
-            remove
-            {
-                _onNotificationOpened -= value;
-            }
+            remove => _onNotificationOpened -= value;
         }
 
-        private static PushNotificationResponseEventHandler _onNotificationAction;
+        private static PushNotificationResponseEventHandler? _onNotificationAction;
         public event PushNotificationResponseEventHandler OnNotificationAction
         {
             add
@@ -358,45 +339,30 @@ namespace Plugin.PushNotification
                     }
                 }
             }
-            remove
-            {
-                _onNotificationAction -= value;
-            }
+            remove => _onNotificationAction -= value;
         }
 
-        static PushNotificationTokenEventHandler _onTokenRefresh;
+        private static PushNotificationTokenEventHandler? _onTokenRefresh;
         public event PushNotificationTokenEventHandler OnTokenRefresh
         {
-            add
-            {
-                _onTokenRefresh += value;
-            }
-            remove
-            {
-                _onTokenRefresh -= value;
-            }
+            add => _onTokenRefresh += value;
+            remove => _onTokenRefresh -= value;
         }
 
-        static PushNotificationErrorEventHandler _onNotificationError;
+        private static PushNotificationErrorEventHandler? _onNotificationError;
         public event PushNotificationErrorEventHandler OnNotificationError
         {
-            add
-            {
-                _onNotificationError += value;
-            }
-            remove
-            {
-                _onNotificationError -= value;
-            }
+            add => _onNotificationError += value;
+            remove => _onNotificationError -= value;
         }
 
-        public NotificationUserCategory[] GetUserNotificationCategories()
+        public NotificationUserCategory[]? GetUserNotificationCategories()
         {
             return userNotificationCategories?.ToArray();
         }
         public static void RegisterUserNotificationCategories(NotificationUserCategory[] notificationCategories)
         {
-            if (notificationCategories != null && notificationCategories.Length > 0)
+            if (notificationCategories?.Length > 0)
             {
                 ClearUserNotificationCategories();
 
@@ -404,7 +370,6 @@ namespace Plugin.PushNotification
                 {
                     userNotificationCategories.Add(userCat);
                 }
-
             }
             else
             {
@@ -418,7 +383,7 @@ namespace Plugin.PushNotification
         {
             _onTokenRefresh?.Invoke(CrossPushNotification.Current, new PushNotificationTokenEventArgs(token));
         }
-        internal static void RegisterAction(IDictionary<string, object> data, string result = null)
+        internal static void RegisterAction(IDictionary<string, object> data, string? result = null)
         {
             var response = new NotificationResponse(data, data.ContainsKey(DefaultPushNotificationHandler.ActionIdentifierKey) ? $"{data[DefaultPushNotificationHandler.ActionIdentifierKey]}" : string.Empty, NotificationCategoryType.Default, result);
 
@@ -445,16 +410,16 @@ namespace Plugin.PushNotification
             editor.Commit();
         }
 
+        #endregion
+
         public void ClearAllNotifications()
         {
-            NotificationManager manager = Application.Context.GetSystemService(Context.NotificationService) as NotificationManager;
-            manager.CancelAll();
+            NotificationManager.CancelAll();
         }
 
         public void RemoveNotification(int id)
         {
-            NotificationManager manager = Application.Context.GetSystemService(Context.NotificationService) as NotificationManager;
-            manager.Cancel(id);
+            NotificationManager.Cancel(id);
         }
 
         public void RemoveNotification(string tag, int id)
@@ -465,13 +430,17 @@ namespace Plugin.PushNotification
             }
             else
             {
-                NotificationManager manager = Application.Context.GetSystemService(Context.NotificationService) as NotificationManager;
-                manager.Cancel(tag, id);
+                NotificationManager.Cancel(tag, id);
             }
         }
 
-        #endregion
+        private NotificationManager? _notificationManager = null;
+        private NotificationManager NotificationManager
+        {
+            get
+            {
+                return _notificationManager ??= Application.Context.GetSystemService(Context.NotificationService) as NotificationManager;
+            }
+        }
     }
-
-
 }

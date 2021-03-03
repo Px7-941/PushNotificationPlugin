@@ -148,7 +148,8 @@ namespace Plugin.PushNotification
         {
             System.Diagnostics.Debug.WriteLine($"{DomainTag} - OnReceived");
 
-            if ((parameters.TryGetValue(SilentKey, out var silent) && (silent.ToString() == "true" || silent.ToString() == "1")) || (IsInForeground() && (!(!parameters.ContainsKey(ChannelIdKey) && parameters.TryGetValue(PriorityKey, out var imp) && ($"{imp}" == "high" || $"{imp}" == "max")) || (!parameters.ContainsKey(PriorityKey) && !parameters.ContainsKey(ChannelIdKey) && PushNotificationManager.DefaultNotificationChannelImportance != NotificationImportance.High && PushNotificationManager.DefaultNotificationChannelImportance != NotificationImportance.Max))))
+            var isSilent = (parameters.TryGetValue(SilentKey, out var silent) && (silent.ToString() == "true" || silent.ToString() == "1"));
+            if (isSilent || (IsInForeground() && (!(!parameters.ContainsKey(ChannelIdKey) && parameters.TryGetValue(PriorityKey, out var imp) && ($"{imp}" == "high" || $"{imp}" == "max")) || (!parameters.ContainsKey(PriorityKey) && !parameters.ContainsKey(ChannelIdKey) && PushNotificationManager.DefaultNotificationChannelImportance != NotificationImportance.High && PushNotificationManager.DefaultNotificationChannelImportance != NotificationImportance.Max))))
             {
                 return;
             }
@@ -156,7 +157,7 @@ namespace Plugin.PushNotification
             Context context = Application.Context;
 
             var notifyId = 0;
-            var title = context.ApplicationInfo.LoadLabel(context.PackageManager);
+            var title = context?.ApplicationInfo?.LoadLabel(context.PackageManager);
             var message = string.Empty;
             var tag = string.Empty;
             var notificationNumber = 0;
@@ -310,7 +311,6 @@ namespace Plugin.PushNotification
                 System.Diagnostics.Debug.WriteLine(ex.ToString());
             }
 
-
             try
             {
                 if (parameters.TryGetValue(LargeIconKey, out object largeIcon) && largeIcon != null)
@@ -324,7 +324,7 @@ namespace Plugin.PushNotification
 
                 if (largeIconResource > 0)
                 {
-                    string name = context.Resources.GetResourceName(largeIconResource);
+                    var name = context.Resources.GetResourceName(largeIconResource);
                     if (name == null)
                         largeIconResource = 0;
                 }
@@ -347,7 +347,7 @@ namespace Plugin.PushNotification
                 }
             }
 
-            Intent resultIntent = typeof(Activity).IsAssignableFrom(PushNotificationManager.NotificationActivityType) ? new Intent(Application.Context, PushNotificationManager.NotificationActivityType) : (PushNotificationManager.DefaultNotificationActivityType == null ? context.PackageManager.GetLaunchIntentForPackage(context.PackageName) : new Intent(Application.Context, PushNotificationManager.DefaultNotificationActivityType));
+            Intent? resultIntent = typeof(Activity).IsAssignableFrom(PushNotificationManager.NotificationActivityType) ? new Intent(Application.Context, PushNotificationManager.NotificationActivityType) : (PushNotificationManager.DefaultNotificationActivityType == null ? context.PackageManager.GetLaunchIntentForPackage(context.PackageName) : new Intent(Application.Context, PushNotificationManager.DefaultNotificationActivityType));
 
             var extras = new Bundle();
             foreach (var p in parameters)
@@ -357,12 +357,12 @@ namespace Plugin.PushNotification
             {
                 extras.PutInt(ActionNotificationIdKey, notifyId);
                 extras.PutString(ActionNotificationTagKey, tag);
-                resultIntent.PutExtras(extras);
+                resultIntent?.PutExtras(extras);
             }
 
             if (PushNotificationManager.NotificationActivityFlags != null)
             {
-                resultIntent.SetFlags(PushNotificationManager.NotificationActivityFlags.Value);
+                resultIntent?.SetFlags(PushNotificationManager.NotificationActivityFlags.Value);
             }
             var requestCode = new Java.Util.Random().NextInt();
             var pendingIntent = PendingIntent.GetActivity(context, requestCode, resultIntent, PendingIntentFlags.UpdateCurrent);
@@ -495,20 +495,20 @@ namespace Plugin.PushNotification
                             var aRequestCode = Guid.NewGuid().GetHashCode();
                             if (userCat.Category.Equals(category, StringComparison.CurrentCultureIgnoreCase))
                             {
-                                Intent actionIntent = null;
-                                PendingIntent pendingActionIntent = null;
-                                NotificationCompat.Action nAction = null;
+                                Intent? actionIntent;
+                                PendingIntent? pendingActionIntent;
+                                NotificationCompat.Action? nAction;
                                 if (action.Type == NotificationActionType.Foreground)
                                 {
                                     actionIntent = typeof(Activity).IsAssignableFrom(PushNotificationManager.NotificationActivityType) ? new Intent(Application.Context, PushNotificationManager.NotificationActivityType) : (PushNotificationManager.DefaultNotificationActivityType == null ? context.PackageManager.GetLaunchIntentForPackage(context.PackageName) : new Intent(Application.Context, PushNotificationManager.DefaultNotificationActivityType));
 
                                     if (PushNotificationManager.NotificationActivityFlags != null)
                                     {
-                                        actionIntent.SetFlags(PushNotificationManager.NotificationActivityFlags.Value);
+                                        actionIntent?.SetFlags(PushNotificationManager.NotificationActivityFlags.Value);
                                     }
 
-                                    extras.PutString(ActionIdentifierKey, action.Id);
-                                    actionIntent.PutExtras(extras);
+                                    extras?.PutString(ActionIdentifierKey, action.Id);
+                                    actionIntent?.PutExtras(extras);
                                     pendingActionIntent = PendingIntent.GetActivity(context, aRequestCode, actionIntent, PendingIntentFlags.UpdateCurrent);
                                     nAction = new NotificationCompat.Action.Builder(context.Resources.GetIdentifier(action.Icon, "drawable", Application.Context.PackageName), action.Title, pendingActionIntent).Build();
                                 }
@@ -517,7 +517,7 @@ namespace Plugin.PushNotification
                                     var input = new RemoteInput.Builder("Result").SetLabel(action.Title).Build();
 
                                     actionIntent = new Intent(context, typeof(PushNotificationReplyReceiver));
-                                    extras.PutString(ActionIdentifierKey, action.Id);
+                                    extras?.PutString(ActionIdentifierKey, action.Id);
                                     actionIntent.PutExtras(extras);
 
                                     pendingActionIntent = PendingIntent.GetBroadcast(context, aRequestCode, actionIntent, PendingIntentFlags.UpdateCurrent);
@@ -530,7 +530,7 @@ namespace Plugin.PushNotification
                                 else
                                 {
                                     actionIntent = new Intent(context, typeof(PushNotificationActionReceiver));
-                                    extras.PutString(ActionIdentifierKey, action.Id);
+                                    extras?.PutString(ActionIdentifierKey, action.Id);
                                     actionIntent.PutExtras(extras);
                                     pendingActionIntent = PendingIntent.GetBroadcast(context, aRequestCode, actionIntent, PendingIntentFlags.UpdateCurrent);
                                     nAction = new NotificationCompat.Action.Builder(context.Resources.GetIdentifier(action.Icon, "drawable", Application.Context.PackageName), action.Title, pendingActionIntent).Build();
@@ -545,8 +545,8 @@ namespace Plugin.PushNotification
 
             OnBuildNotification(notificationBuilder, parameters);
 
-            var notificationManager = (NotificationManager)context.GetSystemService(Context.NotificationService);
-            notificationManager.Notify(tag, notifyId, notificationBuilder.Build());
+            var notificationManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+            notificationManager?.Notify(tag, notifyId, notificationBuilder.Build());
         }
 
         /// <summary>
@@ -556,7 +556,7 @@ namespace Plugin.PushNotification
         /// <param name="parameters">Parameters.</param>
         private void ResolveLocalizedParameters(NotificationCompat.Builder notificationBuilder, IDictionary<string, object> parameters)
         {
-            string getLocalizedString(string name, params string[] arguments)
+            string? getLocalizedString(string name, params string[]? arguments)
             {
                 var context = notificationBuilder.MContext;
                 var resources = context.Resources;
@@ -611,13 +611,10 @@ namespace Plugin.PushNotification
 
         bool IsInForeground()
         {
-            bool isInForeground;
+            var myProcess = new RunningAppProcessInfo();
+            GetMyMemoryState(myProcess);
 
-            RunningAppProcessInfo myProcess = new RunningAppProcessInfo();
-            ActivityManager.GetMyMemoryState(myProcess);
-            isInForeground = myProcess.Importance == Android.App.Importance.Foreground;
-
-            return isInForeground;
+            return myProcess.Importance == Importance.Foreground;
         }
     }
 }

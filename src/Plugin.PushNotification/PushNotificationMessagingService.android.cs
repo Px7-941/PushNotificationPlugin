@@ -8,7 +8,7 @@ namespace Plugin.PushNotification
 {
     [Service]
     [IntentFilter(new[] { "com.google.firebase.MESSAGING_EVENT" })]
-    public class PNMessagingService : FirebaseMessagingService
+    public class PushNotificationMessagingService : FirebaseMessagingService
     {
         public override void OnMessageReceived(RemoteMessage p0)
         {
@@ -58,11 +58,13 @@ namespace Plugin.PushNotification
             foreach (var d in p0.Data)
             {
                 if (!parameters.ContainsKey(d.Key))
+                {
                     parameters.Add(d.Key, d.Value);
+                }
             }
 
             //Fix localization arguments parsing
-            string[] localizationKeys = new string[] { "title_loc_args", "body_loc_args" };
+            var localizationKeys = new string[] { "title_loc_args", "body_loc_args" };
             foreach (var locKey in localizationKeys)
             {
                 if (parameters.ContainsKey(locKey) && parameters[locKey] is string parameterValue)
@@ -87,7 +89,6 @@ namespace Plugin.PushNotification
         {
             ((PushNotificationManager)CrossPushNotification.Current).Token = p0;
             PushNotificationManager.RegisterToken(p0);
-            System.Diagnostics.Debug.WriteLine($"REFRESHED TOKEN: {p0}");
         }
     }
 }

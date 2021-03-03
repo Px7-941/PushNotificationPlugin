@@ -13,7 +13,7 @@ namespace Plugin.PushNotification
     /// </summary>
     public class PushNotificationManager : NSObject, IPushNotification, IUNUserNotificationCenterDelegate
     {
-        static NotificationResponse delayedNotificationResponse = null;
+        static NotificationResponse? delayedNotificationResponse = null;
         const string TokenKey = "Token";
 
         NSString NotificationIdKey = new NSString("id");

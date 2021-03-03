@@ -1,25 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿using System.Collections.Generic;
 using Android.App;
 using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 
 namespace Plugin.PushNotification
 {
     [BroadcastReceiver]
     public class PushNotificationActionReceiver : BroadcastReceiver
     {
-        public override void OnReceive(Context context, Intent intent)
+        public override void OnReceive(Context? context, Intent? intent)
         {
             IDictionary<string, object> parameters = new Dictionary<string, object>();
-            var extras = intent.Extras;
-            
+            var extras = intent?.Extras;
+
             if (extras != null && !extras.IsEmpty)
             {
                 foreach (var key in extras.KeySet())
@@ -29,22 +21,23 @@ namespace Plugin.PushNotification
                 }
             }
 
-         
             PushNotificationManager.RegisterAction(parameters);
-            
-            NotificationManager manager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+
+            var manager = context.GetSystemService(Context.NotificationService) as NotificationManager;
             var notificationId = extras.GetInt(DefaultPushNotificationHandler.ActionNotificationIdKey, -1);
             if (notificationId != -1)
             {
                 var notificationTag = extras.GetString(DefaultPushNotificationHandler.ActionNotificationTagKey, string.Empty);
 
                 if (notificationTag == null)
+                {
                     manager.Cancel(notificationId);
+                }
                 else
+                {
                     manager.Cancel(notificationTag, notificationId);
-
+                }
             }
-
         }
     }
 }

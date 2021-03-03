@@ -7,7 +7,7 @@ namespace Plugin.PushNotification
     /// </summary>
     public class CrossPushNotification
     {
-        static readonly Lazy<IPushNotification> Implementation = new Lazy<IPushNotification>(() => CreatePushNotification(), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+        static readonly Lazy<IPushNotification?> Implementation = new Lazy<IPushNotification?>(() => CreatePushNotification(), System.Threading.LazyThreadSafetyMode.PublicationOnly);
 
         /// <summary>
         /// Current settings to use
@@ -25,7 +25,7 @@ namespace Plugin.PushNotification
             }
         }
 
-        static IPushNotification CreatePushNotification()
+        static IPushNotification? CreatePushNotification()
         {
 #if NETSTANDARD2_0
             return null;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Android.App;
+﻿using Android.App;
 
 namespace Plugin.PushNotification
 {

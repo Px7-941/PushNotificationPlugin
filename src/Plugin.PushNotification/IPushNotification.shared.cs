@@ -19,6 +19,7 @@ namespace Plugin.PushNotification
         RegistrationFailed,
         UnregistrationFailed
     }
+
     public class NotificationUserCategory
     {
         public string Category { get; }
@@ -75,7 +76,6 @@ namespace Plugin.PushNotification
         {
             Token = token;
         }
-
     }
 
     public delegate void PushNotificationErrorEventHandler(object source, PushNotificationErrorEventArgs e);
@@ -90,7 +90,6 @@ namespace Plugin.PushNotification
             Type = type;
             Message = message;
         }
-
     }
 
     public delegate void PushNotificationDataEventHandler(object source, PushNotificationDataEventArgs e);
@@ -103,7 +102,6 @@ namespace Plugin.PushNotification
         {
             Data = data;
         }
-
     }
 
     public delegate void PushNotificationResponseEventHandler(object source, PushNotificationResponseEventArgs e);
@@ -184,7 +182,7 @@ namespace Plugin.PushNotification
         /// <summary>
         /// Get all user notification categories
         /// </summary>
-        NotificationUserCategory[] GetUserNotificationCategories();
+        NotificationUserCategory[]? GetUserNotificationCategories();
 
         /// <summary>
         /// Clear all notifications

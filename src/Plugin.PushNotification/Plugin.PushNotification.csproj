@@ -12,7 +12,6 @@
         <Version>3.4.3</Version>
         <PackOnBuild>true</PackOnBuild>
         <NeutralLanguage>en</NeutralLanguage>
-        <LangVersion>default</LangVersion>
         <DefineConstants>$(DefineConstants);</DefineConstants>
         <UseFullSemVerForNuGet>false</UseFullSemVerForNuGet>
         <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -61,7 +60,7 @@
     </ItemGroup>
     <ItemGroup Condition=" $(TargetFramework.StartsWith('MonoAndroid')) ">
         <PackageReference Include="Xamarin.Firebase.Messaging" Version="121.0.1" />
-        <PackageReference Include="Xamarin.GooglePlayServices.Basement" Version="117.5.0" />
+        <PackageReference Include="Xamarin.GooglePlayServices.Basement" Version="117.6.0" />
         <!-- fix nuget restore warnings and https://stackoverflow.com/questions/65381403/java-lang-noclassdeffounderror-when-implementing-firebase-cloud-messaging -->
         <PackageReference Include="Xamarin.Google.Android.DataTransport.TransportRuntime" Version="2.2.5" />
         <PackageReference Include="Xamarin.Google.Dagger" Version="2.27.0" />
